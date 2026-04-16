@@ -16,7 +16,7 @@ export async function can(module: ERPModule, action: ERPAction): Promise<boolean
   if (!user?.id) return false;
 
   // 1. Super Admin Bypass
-  if (user.roleName === "Super Admin") return true;
+  if (user.roleName?.toLowerCase() === "super admin") return true;
 
   // 2. Fetch the permission matrix for the user's role and requested module
   const permission = await prisma.permissionMatrix.findUnique({

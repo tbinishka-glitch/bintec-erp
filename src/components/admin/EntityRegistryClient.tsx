@@ -328,6 +328,7 @@ export function EntityRegistryClient({ entities, roles, branches, categories, su
             myRole={myRole}
             onClose={() => { setShowAddModal(false); setEditingEntity(null) }}
             onSuccess={() => { setShowAddModal(false); setEditingEntity(null); router.refresh() }}
+            onCreated={(entityId) => { setShowAddModal(false); setEditingEntity(null); router.refresh(); toast.success(`Entity created: ${entityId}`) }}
           />
         )}
       </AnimatePresence>
@@ -497,9 +498,9 @@ function EntityRow({ entity, onView, onEdit, onToggleStatus, onFlagDuplicate, on
 // ═══════════════════════════════════════════════════════════════════════════════
 // ADD / EDIT ENTITY MODAL — 7-SECTION MULTI-STEP FORM
 // ═══════════════════════════════════════════════════════════════════════════════
-const FORM_SECTIONS = ['Personal', 'Identity', 'Contact', 'Perm. Address', 'Curr. Address', 'Institutional', 'Roles']
+const FORM_SECTIONS = ['Personal', 'Identity', 'Contact', 'Perm. Address', 'Curr. Address', 'Roles', 'Institutional']
 
-function EntityFormModal({ entity, roles, branches, categories, subCategories, departments, myRole, onClose, onSuccess }: {
+function EntityFormModal({ entity, roles, branches, categories, subCategories, departments, myRole, onClose, onSuccess, onCreated }: {
   entity: Entity | null; roles: Role[]; branches: Branch[]
   categories: Category[]; subCategories: SubCategory[]
   departments: Department[]; myRole: string
@@ -769,60 +770,8 @@ function EntityFormModal({ entity, roles, branches, categories, subCategories, d
               )}
             </div>
 
-            {/* ── SECTION F: Institutional Linking ── */}
+            {/* ── SECTION F: Role Assignment (Moving to 6th place) ── */}
             <div className={step === 5 ? 'block space-y-5 animate-in fade-in slide-in-from-right-2 duration-200' : 'hidden'}>
-              <SectionHeader icon={<Building className="w-4 h-4" />} title="Institutional Linking" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FField label="Main Branch" name="branchId" type="select" defaultValue={entity?.branchId || ''}
-                  options={[{ value: '', label: 'Network-wide' }, ...branches.map(b => ({ value: b.id, label: b.name }))]} />
-                <FField label="System Role" name="roleId" type="select" defaultValue={entity?.roleId || ''}
-                  options={[{ value: '', label: 'No System Role' }, ...roles.filter(r => myRole === 'Super Admin' || r.name !== 'Super Admin').map(r => ({ value: r.id, label: r.name }))]} />
-              </div>
-
-              {/* Role-conditional fields */}
-              {(roles_.isEmployee) && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-primary/5 p-5 rounded-2xl border border-primary/10">
-                  <p className="md:col-span-3 text-[10px] font-black text-primary uppercase tracking-widest">Employee-Specific Fields</p>
-                  <FField label="Department" name="departmentId" type="select" defaultValue={entity?.departmentId || ''}
-                    options={[{ value: '', label: 'Select...' }, ...departments.map(d => ({ value: d.id, label: d.name }))]} />
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-slate-500 uppercase">Employee Category *</label>
-                    <select name="employeeCategoryId" defaultValue={entity?.employeeCategoryId || ''} onChange={e => setSelectedCatId(e.target.value)}
-                      className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-primary/10 outline-none">
-                      <option value="">Select Category...</option>
-                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-slate-500 uppercase">Position</label>
-                    <select name="employeeSubCategoryId" defaultValue={entity?.employeeSubCategoryId || ''} disabled={!selectedCatId}
-                      className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-primary/10 outline-none disabled:opacity-50">
-                      <option value="">Select Position...</option>
-                      {subCategories.filter(s => s.categoryId === selectedCatId).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FField label="Entity Source" name="entitySource" type="select" defaultValue={entity?.entitySource || ''}
-                  options={['', 'WALK_IN', 'REFERRAL', 'ONLINE', 'SYSTEM', 'BULK_IMPORT']} />
-                <FField label="First Registered Date" name="firstRegisteredDate" type="date"
-                  defaultValue={entity?.firstRegisteredDate ? new Date(entity.firstRegisteredDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]} />
-                <FField label="Entity Status" name="entityStatus" type="select" defaultValue={entity?.entityStatus || 'ACTIVE'} options={ENTITY_STATUSES} />
-              </div>
-
-              {!isEdit && (
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">System Login Password</p>
-                  <FField label="Initial Password" name="password" type="password" defaultValue="password123" />
-                  <p className="text-[10px] text-slate-400">Entity will be required to change this on first login.</p>
-                </div>
-              )}
-            </div>
-
-            {/* ── SECTION G: Role Assignment ── */}
-            <div className={step === 6 ? 'block space-y-5 animate-in fade-in slide-in-from-right-2 duration-200' : 'hidden'}>
               <SectionHeader icon={<Shield className="w-4 h-4" />} title="Role Assignment" />
               <p className="text-sm text-slate-500">Select all roles that apply to this entity. Multiple roles can be active simultaneously. Selecting a role automatically creates the linked module profile shell.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -864,6 +813,58 @@ function EntityFormModal({ entity, roles, branches, categories, subCategories, d
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── SECTION G: Institutional Linking (Moving to 7th place) ── */}
+            <div className={step === 6 ? 'block space-y-5 animate-in fade-in slide-in-from-right-2 duration-200' : 'hidden'}>
+              <SectionHeader icon={<Building className="w-4 h-4" />} title="Institutional Linking" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FField label="Main Branch" name="branchId" type="select" defaultValue={entity?.branchId || ''}
+                  options={[{ value: '', label: 'Network-wide' }, ...branches.map(b => ({ value: b.id, label: b.name }))]} />
+                <FField label="System Role" name="roleId" type="select" defaultValue={entity?.roleId || ''}
+                  options={[{ value: '', label: 'No System Role' }, ...roles.filter(r => myRole.toLowerCase() === 'super admin' || r.name.toLowerCase() !== 'super admin').map(r => ({ value: r.id, label: r.name }))]} />
+              </div>
+
+              {/* Role-conditional fields */}
+              {(roles_.isEmployee) && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-primary/5 p-5 rounded-2xl border border-primary/10">
+                  <p className="md:col-span-3 text-[10px] font-black text-primary uppercase tracking-widest">Employee-Specific Fields</p>
+                  <FField label="Department" name="departmentId" type="select" defaultValue={entity?.departmentId || ''}
+                    options={[{ value: '', label: 'Select...' }, ...departments.map(d => ({ value: d.id, label: d.name }))]} />
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-black text-slate-500 uppercase">Employee Category *</label>
+                    <select name="employeeCategoryId" defaultValue={entity?.employeeCategoryId || ''} onChange={e => setSelectedCatId(e.target.value)}
+                      className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-primary/10 outline-none">
+                      <option value="">Select Category...</option>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-black text-slate-500 uppercase">Position</label>
+                    <select name="employeeSubCategoryId" defaultValue={entity?.employeeSubCategoryId || ''} disabled={!selectedCatId}
+                      className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-primary/10 outline-none disabled:opacity-50">
+                      <option value="">Select Position...</option>
+                      {subCategories.filter(s => s.categoryId === selectedCatId).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FField label="Entity Source" name="entitySource" type="select" defaultValue={entity?.entitySource || ''}
+                  options={['', 'WALK_IN', 'REFERRAL', 'ONLINE', 'SYSTEM', 'BULK_IMPORT']} />
+                <FField label="First Registered Date" name="firstRegisteredDate" type="date"
+                  defaultValue={entity?.firstRegisteredDate ? new Date(entity.firstRegisteredDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]} />
+                <FField label="Entity Status" name="entityStatus" type="select" defaultValue={entity?.entityStatus || 'ACTIVE'} options={ENTITY_STATUSES} />
+              </div>
+
+              {!isEdit && (
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">System Login Password</p>
+                  <FField label="Initial Password" name="password" type="password" defaultValue="password123" />
+                  <p className="text-[10px] text-slate-400">Entity will be required to change this on first login.</p>
                 </div>
               )}
             </div>

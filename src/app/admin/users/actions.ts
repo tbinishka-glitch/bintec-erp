@@ -10,12 +10,23 @@ async function assertAdmin() {
   if (!session?.user?.id) throw new Error('Unauthenticated')
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: { role: true, organization: { select: { name: true } } },
+    include: { role: true },
   })
-  if (!['Super Admin', 'Corporate Admin', 'IT Admin', 'Network Admin', 'Branch Admin'].includes(user?.role?.name ?? '')) {
+  const authorizedRoles = ['super admin', 'corporate admin', 'it admin', 'network admin', 'branch admin']
+  if (!authorizedRoles.includes(user?.role?.name?.toLowerCase() ?? '')) {
     throw new Error('Unauthorized')
   }
-  return { userId: session.user.id, orgName: user?.organization?.name ?? '', roleName: user?.role?.name ?? '' }
+  return { 
+    userId: session.user.id, 
+    organizationId: user?.organizationId ?? '', 
+    roleName: user?.role?.name ?? '' 
+  }
+}
+
+async function getOrgName(orgId: string): Promise<string> {
+  if (!orgId) return ''
+  const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { name: true } })
+  return org?.name ?? ''
 }
 
 // ── Derive org prefix from org name (first 3 letters, uppercase) ─────────────
@@ -118,8 +129,8 @@ export async function checkEntityDuplicates(formData: FormData) {
 
 // ── CREATE ENTITY ───────────────────────────────────────────────────────────
 export async function createEntity(formData: FormData) {
-  const { userId: adminId, orgName } = await assertAdmin()
-
+  const { userId: adminId, organizationId } = await assertAdmin()
+  const orgName = await getOrgName(organizationId)
   const entityId = await generateEntityId(orgName)
 
   // Section A — Personal
@@ -254,6 +265,7 @@ export async function createEntity(formData: FormData) {
       isParent,
       isSupplier,
       isStudent,
+      organizationId: organizationId || null,
       entityStatus: 'ACTIVE',
       forcePasswordChange: true,
     }
