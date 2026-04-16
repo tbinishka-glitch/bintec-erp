@@ -1,0 +1,34 @@
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+// Transparent middleware that only handles path injection
+// This resolves the "Unexpected token <" error by ensuring 
+// auth API calls remain pure JSON and are not intercepted by the middleware.
+export function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  
+  // 1. Inject x-pathname header for Server Component layout detection
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-pathname', pathname)
+
+  // 2. Simply proceed with the next response including the header
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public assets)
+     * - api/auth (NextAuth endpoints)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|api/auth).*)',
+  ],
+}

@@ -1,0 +1,203 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,400&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* ── Brand: Rich Purple Spectrum ── */
+  --color-primary-50:  #f5f0ff;
+  --color-primary-100: #ede0ff;
+  --color-primary-200: #dcc5ff;
+  --color-primary-300: #c49eff;
+  --color-primary-400: #a96ef5;
+  --color-primary-500: #8b44ea;
+  --color-primary-600: #7428cc;
+  --color-primary-700: #5A2D82;
+  --color-primary-800: #4a2068;
+  --color-primary-900: #381850;
+
+  /* ── Flint Gray / Muted tones ── */
+  --color-flint-50:  #f8f9fa;
+  --color-flint-100: #f1f3f5;
+  --color-flint-200: #e9ecef;
+  --color-flint-300: #dee2e6;
+  --color-flint-400: #ced4da;
+  --color-flint-500: #adb5bd;
+  --color-flint-600: #868e96;
+  --color-flint-700: #495057;
+
+  /* ── Gold Accent ── */
+  --color-gold-300: #fde68a;
+  --color-gold-400: #fbbf24;
+  --color-gold-500: #f59e0b;
+  --color-gold-600: #d97706;
+  --color-gold-leeds: #a98b44;
+
+  /* ── Semantic tokens (Luminous Light Mode) ── */
+  --color-background:          var(--background);
+  --color-foreground:          var(--foreground);
+  --color-card:                var(--card);
+  --color-card-foreground:     var(--card-foreground);
+  --color-border:              var(--border);
+  --color-input:               var(--input);
+  --color-ring:                var(--ring);
+  --color-primary:             var(--primary);
+  --color-primary-foreground:  var(--primary-foreground);
+  --color-secondary:           var(--secondary);
+  --color-secondary-foreground:var(--secondary-foreground);
+  --color-muted:               var(--muted);
+  --color-muted-foreground:    var(--muted-foreground);
+  --color-accent:              var(--accent);
+  --color-accent-foreground:   var(--accent-foreground);
+  --color-destructive:         #e03e3e;
+  --color-destructive-foreground: #ffffff;
+  --color-popover:             var(--popover);
+  --color-popover-foreground:  var(--popover-foreground);
+  --color-sidebar:             var(--sidebar);
+  --color-sidebar-foreground:  var(--sidebar-foreground);
+
+  /* ── Radius ── */
+  --radius-sm:  calc(var(--radius) - 4px);
+  --radius-md:  calc(var(--radius) - 2px);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  /* ── Font ── */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ══════════════════════════════
+   LUMINOUS THEME — Base Identity
+   (No manual Dark mode toggle)
+══════════════════════════════ */
+:root {
+  /* Page & surface */
+  --background:           #ffffff;   /* Pure white for elite clarity */
+  --foreground:           #09090b;   /* Deep executive black */
+
+  /* Cards */
+  --card:                 #ffffff;
+  --card-foreground:      #09090b;
+  --popover:              #ffffff;
+  --popover-foreground:   #09090b;
+
+  /* Brand */
+  --primary:              #5A2D82;
+  --primary-foreground:   #ffffff;
+
+  /* Secondary — refined neutral tint */
+  --secondary:            #f4f4f5;
+  --secondary-foreground: #09090b;
+
+  /* Muted — strictly neutral gray scale */
+  --muted:                #f4f4f5;
+  --muted-foreground:     #71717a;
+
+  /* Accent — refined neutral */
+  --accent:               #f4f4f5;
+  --accent-foreground:    #5A2D82;
+
+  /* Utility */
+  --border:               #e4e4e7;
+  --input:                #f4f4f5;
+  --ring:                 #5A2D82;
+  --radius:               2.5rem; /* Standardizing on the 2.5rem refined radius */
+
+  /* Sidebar specifics */
+  --sidebar:              #ffffff;
+  --sidebar-foreground:   #09090b;
+}
+
+/* ══════════════════════════════
+   BASE STYLES
+══════════════════════════════ */
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: var(--ring);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply antialiased;
+  }
+
+  /* Soft custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.02); }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* ══════════════════════════════
+   UTILITIES
+══════════════════════════════ */
+@layer utilities {
+  .animate-fade-in-up { 
+    animation: fade-in-up 0.4s cubic-bezier(.25,.46,.45,.94) both; 
+  }
+
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Sidebar active item (Elite Purple Pill) */
+  .nav-active {
+    background: #5A2D82;
+    background: linear-gradient(to bottom, #5A2D82, #4a2068);
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Card shadow - neutral executive style */
+  .shadow-soft {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  .shadow-premium {
+    box-shadow: 
+      0 10px 15px -3px rgba(0, 0, 0, 0.04), 
+      0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  }
+
+
+  .text-shadow-hero {
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+}
+
+/* ══════════════════════════════
+   SEASONAL THEMES (Admins only)
+══════════════════════════════ */
+.theme-christmas {
+  --primary:             #16a34a;
+  --secondary:           #b91c1c;
+  --ring:                #16a34a;
+}
+
+.theme-new-year {
+  --primary:             #f59e0b;
+  --secondary:           #111827;
+  --ring:                #f59e0b;
+}
+
+.theme-halloween {
+  --primary:             #ea580c;
+  --secondary:           #000000;
+  --ring:                #ea580c;
+}

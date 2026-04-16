@@ -1,0 +1,663 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Organization {
+  id             String               @id @default(cuid())
+  name           String               @unique
+  slug           String               @unique
+  logoUrl        String?
+  brandColor     String?              @default("#5A2D82")
+  brandGold      String?              @default("#D4AF37")
+  brandGray      String?              @default("#F8F9FA")
+  brandText      String?              @default("#000000")
+  isActive       Boolean              @default(true)
+  metadata       String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  announcements  Announcement[]
+  articles       Article[]
+  celebrations   Celebration[]
+  auditLogs      AuditLog[]
+  branches       Branch[]
+  chatGroups     ChatGroup[]
+  chatCategories ChatGroupCategory[]
+  departments    Department[]
+  categories     EmployeeCategory[]
+  settings       OrganizationSetting?
+  intranetSetting IntranetSetting?
+  roles          Role[]
+  users          User[]
+  modules        Module[]
+  workflows      Workflow[]
+  grades         Grade[]
+  meetings       VirtualMeeting[]
+  welfare        WelfareResource[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id                     String                 @id @default(cuid())
+  entityId               String?                @unique  // ENT-000001 format — universal master identity key
+  name                   String?
+  firstName              String?
+  lastName               String?
+  middleName             String?
+  preferredName          String?
+  title                  String?                // Mr, Mrs, Dr, Prof, etc.
+  email                  String?                @unique
+  emailVerified          DateTime?
+  image                  String?
+  password               String?
+  organizationId         String?
+  roleId                 String?
+  branchId               String?
+  departmentId           String?
+  employeeCategoryId     String?
+  employeeSubCategoryId  String?
+  joinedDate             DateTime               @default(now())
+  dateOfBirth            DateTime?
+  isActive               Boolean                @default(true)
+  entityStatus           String?                @default("ACTIVE") // DRAFT|PENDING_APPROVAL|ACTIVE|INACTIVE|ARCHIVED
+  deletedAt              DateTime?
+  address                String?
+  mobileNumber           String?
+  secondaryMobile        String?
+  landPhone              String?
+  officialEmail          String?
+  staffId                String?
+  epfNo                  String?
+  etfNo                  String?
+  nicPassport            String?
+  passportNo             String?
+  birthCertNo            String?
+  drivingLicenseNo       String?
+  taxId                  String?
+  gender                 String?
+  maritalStatus          String?
+  nationality            String?
+  religion               String?
+  employmentStatus       String?                @default("PERMANENT")
+  reportingManagerId     String?
+  forcePasswordChange    Boolean                @default(false)
+  // Current Address
+  currentAddressLine1    String?
+  currentAddressLine2    String?
+  currentAddressLine3    String?
+  currentCity            String?
+  currentDistrict        String?
+  currentProvince        String?
+  currentPostalCode      String?
+  currentCountry         String?
+  // Permanent Address
+  permanentAddressLine1  String?
+  permanentAddressLine2  String?
+  permanentAddressLine3  String?
+  permanentCity          String?
+  permanentDistrict      String?
+  permanentProvince      String?
+  permanentPostalCode    String?
+  permanentCountry       String?
+  telephoneNumber        String?
+  emergencyContactName   String?
+  emergencyContactRel    String?
+  emergencyContactNumber String?
+  emergencyContactLand   String?
+  isInIntranet           Boolean                @default(false)
+  notes                  String?
+  designation            String?
+  lastProbationReminded  DateTime?
+  bio                    String?
+  qualifications         String?
+  leadershipTitle        String?
+  leadershipTier         String?
+  leadershipQuote        String?
+  entitySource           String?                // WALK_IN|REFERRAL|ONLINE|SYSTEM
+  firstRegisteredDate    DateTime?
+  isDuplicateFlagged     Boolean                @default(false)
+  // ── Entity Role Mapping ──
+  isEmployee             Boolean                @default(false)
+  isParent               Boolean                @default(false)
+  isStudent              Boolean                @default(false)
+  isSupplier             Boolean                @default(false)
+  // ── Module Access ──
+  activeModules          String?                // Comma-separated module slugs
+  accounts               Account[]
+  announcements          Announcement[]         @relation("Author")
+  articles               Article[]              @relation("Author")
+  celebrations           Celebration[]
+  auditLogs              AuditLog[]
+  ledBranches            Branch[]               @relation("BranchHead")
+  comments               Comment[]
+  chatGroups             GroupMember[]
+  deletedMessages        Message[]              @relation("MessageDeleter")
+  messages               Message[]
+  milestones             Milestone[]
+  notifications          Notification[]
+  profileUpdates         ProfileUpdateRequest[]
+  reactions              Reaction[]
+  sessions               Session[]
+  theme                  ThemePreference?
+  reportingManager       User?                  @relation("Manager", fields: [reportingManagerId], references: [id])
+  subordinates           User[]                 @relation("Manager")
+  department             Department?            @relation(fields: [departmentId], references: [id])
+  employeeSubCategory    EmployeeSubCategory?   @relation(fields: [employeeSubCategoryId], references: [id])
+  employeeCategory       EmployeeCategory?      @relation(fields: [employeeCategoryId], references: [id])
+  branch                 Branch?                @relation(fields: [branchId], references: [id])
+  role                   Role?                  @relation(fields: [roleId], references: [id])
+  organization           Organization?          @relation(fields: [organizationId], references: [id])
+  virtualMeetings        VirtualMeeting[]
+  
+  // ── Module-Specific Extensions ──
+  studentProfile         StudentProfile?
+  parentProfile          ParentProfile?
+  supplierProfile        SupplierProfile?
+}
+
+model StudentProfile {
+  userId        String   @id
+  studentId     String   @unique
+  gradeId       String?
+  grade         Grade?   @relation(fields: [gradeId], references: [id])
+  parentId      String?
+  parent        ParentProfile? @relation(fields: [parentId], references: [userId])
+  enrollmentDate DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ParentProfile {
+  userId        String   @id
+  occupation    String?
+  officeNumber  String?
+  students      StudentProfile[]
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SupplierProfile {
+  userId        String   @id
+  companyName   String
+  brNumber      String?  @unique
+  category      String?  // e.g. "STATIONERY", "IT", "CONSTRUCTION"
+  paymentTerms  String?
+  rating        Int      @default(5)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Grade {
+  id             String           @id @default(cuid())
+  name           String           // e.g. "Grade 1", "AL 2026"
+  section        String?          // e.g. "Local", "London"
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  students       StudentProfile[]
+
+  @@unique([name, organizationId])
+}
+
+model Role {
+  id             String             @id @default(cuid())
+  name           String
+  permissions    String
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id])
+  users          User[]
+  matrix         PermissionMatrix[]
+
+  @@unique([name, organizationId])
+}
+
+model Module {
+  id             String             @id @default(cuid())
+  name           String
+  slug           String             @unique
+  icon           String?
+  description    String?
+  isActive       Boolean            @default(true)
+  config         String?            // JSON configuration
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id])
+  permissions    PermissionMatrix[]
+}
+
+model PermissionMatrix {
+  id         String  @id @default(cuid())
+  roleId     String
+  moduleSlug String
+  canView    Boolean @default(false)
+  canCreate  Boolean @default(false)
+  canEdit    Boolean @default(false)
+  canDelete  Boolean @default(false)
+  canApprove Boolean @default(false)
+  canConfig  Boolean @default(false)
+  role       Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  module     Module  @relation(fields: [moduleSlug], references: [slug])
+
+  @@unique([roleId, moduleSlug])
+}
+
+model Workflow {
+  id             String         @id @default(cuid())
+  name           String
+  moduleSlug     String
+  entityType     String         // e.g. "PURCHASE_ORDER", "LEAVE_REQUEST"
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  steps          WorkflowStep[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model WorkflowStep {
+  id          String   @id @default(cuid())
+  workflowId  String
+  order       Int
+  roleId      String?
+  description String?
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+}
+
+model Branch {
+  id             String         @id @default(cuid())
+  name           String
+  location       String?
+  branchHeadId   String?
+  organizationId String
+  announcements  Announcement[]
+  celebrations   Celebration[]
+  articles       Article[]
+  branchHead     User?          @relation("BranchHead", fields: [branchHeadId], references: [id])
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  users          User[]
+
+  @@unique([name, organizationId])
+}
+
+model Department {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  users          User[]
+
+  @@unique([name, organizationId])
+}
+
+model EmployeeCategory {
+  id             String                @id @default(cuid())
+  name           String
+  description    String?
+  slug           String                @unique
+  organizationId String
+  organization   Organization          @relation(fields: [organizationId], references: [id])
+  subCategories  EmployeeSubCategory[]
+  users          User[]
+  announcements  Announcement[]        @relation("AnnouncementToEmployeeCategory")
+  articles       Article[]             @relation("ArticleToEmployeeCategory")
+  milestones     Milestone[]           @relation("EmployeeCategoryToMilestone")
+  notifications  Notification[]        @relation("EmployeeCategoryToNotification")
+  meetings       VirtualMeeting[]      @relation("EmployeeCategoryToVirtualMeeting")
+
+  @@unique([name, organizationId])
+}
+
+model EmployeeSubCategory {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?
+  categoryId  String
+  category    EmployeeCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  users       User[]
+
+  @@unique([name, categoryId])
+}
+
+model Announcement {
+  id               String             @id @default(cuid())
+  title            String
+  content          String
+  authorId         String
+  branchId         String?
+  organizationId   String
+  isPinned         Boolean            @default(false)
+  expiryDate       DateTime?
+  bannerImage      String?
+  priority         String?            @default("NORMAL")
+  popupDisplay     Boolean            @default(false)
+  pushNotification Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  branch           Branch?            @relation(fields: [branchId], references: [id])
+  author           User               @relation("Author", fields: [authorId], references: [id])
+  organization     Organization       @relation(fields: [organizationId], references: [id])
+  targetCategories EmployeeCategory[] @relation("AnnouncementToEmployeeCategory")
+}
+
+model Article {
+  id               String             @id @default(cuid())
+  title            String
+  content          String
+  category         String
+  documentType     String             @default("Blog Article")
+  mainCategory     String?
+  subCategory      String?
+  academicCategory String?
+  imageUrl         String?
+  pdfUrl           String?
+  effectiveDate    DateTime?
+  reviewDate       DateTime?
+  expiryDate       DateTime?
+  versionNumber    String?
+  issuedBy         String?
+  approvedBy       String?
+  isMultipart      Boolean            @default(false)
+  partNumber       Int?               @default(1)
+  parentId         String?
+  visibility       String             @default("ALL")
+  status           String             @default("APPROVED")
+  authorId         String
+  organizationId   String
+  branchId         String?
+  tags             String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  author           User               @relation("Author", fields: [authorId], references: [id])
+  organization     Organization       @relation(fields: [organizationId], references: [id])
+  branch           Branch?            @relation(fields: [branchId], references: [id])
+  targetCategories EmployeeCategory[] @relation("ArticleToEmployeeCategory")
+}
+
+model ChatGroup {
+  id             String             @id @default(cuid())
+  name           String?
+  type           String             @default("DIRECT")
+  branchId       String?
+  organizationId String
+  description    String?
+  iconUrl        String?
+  categoryId     String?
+  adminId        String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @default(now()) @updatedAt
+  category       ChatGroupCategory? @relation(fields: [categoryId], references: [id])
+  organization   Organization       @relation(fields: [organizationId], references: [id])
+  members        GroupMember[]
+  messages       Message[]
+}
+
+model ChatGroupCategory {
+  id             String       @id @default(cuid())
+  name           String
+  organizationId String
+  createdAt      DateTime     @default(now())
+  groups         ChatGroup[]
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([name, organizationId])
+}
+
+model GroupMember {
+  id         String    @id @default(cuid())
+  userId     String
+  groupId    String
+  joinedAt   DateTime  @default(now())
+  lastReadAt DateTime  @default(now())
+  group      ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  content     String
+  senderId    String
+  groupId     String
+  type        String    @default("TEXT")
+  fileUrl     String?
+  fileName    String?
+  fileSize    Int?
+  isDeleted   Boolean   @default(false)
+  deletedAt   DateTime?
+  deletedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  deletedBy   User?     @relation("MessageDeleter", fields: [deletedById], references: [id])
+  group       ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  sender      User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model VirtualMeeting {
+  id               String             @id @default(cuid())
+  title            String
+  hostId           String
+  branchId         String?
+  organizationId   String
+  scheduledFor     DateTime?
+  meetingLink      String?
+  createdAt        DateTime           @default(now())
+  host             User               @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  organization     Organization       @relation(fields: [organizationId], references: [id])
+  targetCategories EmployeeCategory[] @relation("EmployeeCategoryToVirtualMeeting")
+}
+
+model Milestone {
+  id               String             @id @default(cuid())
+  type             String
+  userId           String
+  description      String?
+  imageUrl         String?
+  createdAt        DateTime           @default(now())
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetCategories EmployeeCategory[] @relation("EmployeeCategoryToMilestone")
+}
+
+model Reaction {
+  id         String   @id @default(cuid())
+  userId     String
+  entityType String
+  entityId   String
+  emoji      String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entityType, entityId, emoji])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  userId     String
+  entityType String
+  entityId   String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id               String             @id @default(cuid())
+  userId           String?
+  message          String
+  link             String?
+  isRead           Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  user             User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetCategories EmployeeCategory[] @relation("EmployeeCategoryToNotification")
+}
+
+model WelfareResource {
+  id             String       @id @default(cuid())
+  title          String
+  description    String?
+  link           String?
+  category       String
+  organizationId String
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+model ThemePreference {
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  theme       String  @default("system")
+  accentColor String?
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProfileUpdateRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  changes   String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OrganizationSetting {
+  id               String       @id @default(cuid())
+  organizationId   String       @unique
+  activeTheme      String       @default("default")
+  snowfallEnabled  Boolean      @default(false)
+  santaEnabled     Boolean      @default(false)
+  confettiEnabled  Boolean      @default(false)
+  fireworksEnabled Boolean      @default(false)
+  balloonsEnabled  Boolean      @default(false)
+  updatedAt        DateTime     @updatedAt
+  organization     Organization @relation(fields: [organizationId], references: [id])
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  action         String
+  entity         String
+  entityId       String?
+  details        String?
+  ipAddress      String?
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+// ═════════════════════════════════════════════════════════
+// BUSINESS INTELLIGENCE (BI) EXTENSION
+// ═════════════════════════════════════════════════════════
+
+model FinancialTransaction {
+  id              String   @id @default(cuid())
+  type            String   // INCOME, EXPENSE
+  amount          Float
+  category        String
+  description     String?
+  date            DateTime @default(now())
+  branchId        String?
+  organizationId  String   @default("leeds")
+}
+
+model StudentPayment {
+  id              String   @id @default(cuid())
+  studentName     String
+  amountPaid      Float
+  amountDue       Float
+  status          String   // PAID, PARTIAL, DUE
+  date            DateTime @default(now())
+  branchId        String?
+  organizationId  String   @default("leeds")
+}
+
+model AttendanceRecord {
+  id              String   @id @default(cuid())
+  entityType      String   // STAFF, STUDENT
+  branchId        String?
+  totalCount      Int
+  presentCount    Int      @default(0)
+  date            DateTime @default(now())
+  organizationId  String   @default("leeds")
+}
+
+model ExamReport {
+  id              String   @id @default(cuid())
+  examName        String
+  year            Int
+  branchId        String?
+  totalStudents   Int
+  passCount       Int      @default(0)
+  averageScore    Float    @default(0)
+  organizationId  String   @default("leeds")
+}
+
+model Celebration {
+  id             String       @id @default(cuid())
+  type           String       // BIRTHDAY, NEW_JOINER, WEDDING, ACHIEVEMENT, PROMOTION, CHILD_BIRTH, FAREWELL
+  title          String
+  message        String?
+  imageUrl       String?
+  userId         String?
+  branchId       String?
+  organizationId String
+  publishDate    DateTime?    @default(now())
+  isFeatured     Boolean      @default(false)
+  showAsPopup    Boolean      @default(false)
+  priority       String       @default("NORMAL") // NORMAL, HIGH, CORPORATE
+  status         String       @default("APPROVED") // DRAFT, PENDING, APPROVED
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User?        @relation(fields: [userId], references: [id])
+  branch         Branch?      @relation(fields: [branchId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+model IntranetSetting {
+  id                      String       @id @default(cuid())
+  organizationId          String       @unique
+  articleApprovalsEnabled Boolean      @default(true)
+  defaultPublishBehavior  String       @default("DRAFT")
+  birthdayAutoPublish     Boolean      @default(true)
+  newJoinerAutoPublish    Boolean      @default(true)
+  commentsEnabled         Boolean      @default(true)
+  reactionsEnabled        Boolean      @default(true)
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+  organization            Organization @relation(fields: [organizationId], references: [id])
+}
+

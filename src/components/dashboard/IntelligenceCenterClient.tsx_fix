@@ -1,0 +1,132 @@
+'use client';
+
+import * as React from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { 
+  Users, Building, Megaphone, ShieldCheck, 
+  ChevronRight, ArrowUpRight, Activity, Clock,
+  TrendingUp, Wallet, ArrowRight, BookOpen,
+  UserCheck, AlertCircle, BarChart3, LineChart as LucideLineChart
+} from 'lucide-react';
+import { 
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip as ReTooltip, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Legend
+} from 'recharts';
+import Image from 'next/image';
+
+const COLORS = ['#7C3AED', '#F59E0B', '#10B981', '#3B82F6', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1'];
+
+const ICON_MAP: Record<string, any> = {
+  Users: Users,
+  Building: Building,
+  Megaphone: Megaphone,
+  Briefcase: require('lucide-react').Briefcase,
+  ShieldCheck: ShieldCheck,
+  Wallet: Wallet,
+  Activity: Activity
+};
+
+interface IntelligenceData {
+  stats: any[];
+  financeReports: any[];
+  categoryReports: any[];
+  branchReports: any[];
+  attendanceReports: any[];
+  user: {
+    name: string;
+    role: string;
+  };
+}
+
+export function IntelligenceCenterClient({ data }: { data: IntelligenceData }) {
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return <div className="min-h-screen animate-pulse bg-slate-50" />;
+
+  const { stats, financeReports, categoryReports, branchReports, attendanceReports, user } = data;
+
+  const isAdmin = ['Super Admin', 'Corporate Admin', 'IT Admin', 'Network Admin'].includes(user.role);
+
+  return (
+    <div className="flex-1 space-y-10 p-10 pb-24 bg-[#F8F9FC] min-h-screen overflow-y-auto no-scrollbar">
+      
+      {/* ── CINEMATIC INTEL HERO ── */}
+      <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-primary via-indigo-900 to-black p-12 text-white shadow-2xl shadow-primary/20">
+        <div className="absolute top-0 right-0 w-1/2 h-full opacity-20 transform translate-x-20">
+          <Image src="/logo.png" alt="Leeds" width={500} height={500} className="object-cover grayscale" />
+        </div>
+        
+        <div className="relative z-10 flex flex-col lg:flex-row items-end justify-between gap-8">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-black uppercase tracking-[0.2em]">
+              <Activity size={14} className="text-primary animate-pulse" />
+              <span>Institutional Intelligence Hub</span>
+            </div>
+            
+            <div className="space-y-1">
+              <h1 className="text-5xl font-black tracking-tight leading-tight">
+                System <span className="text-white/80">Snapshot</span>
+              </h1>
+              <p className="text-lg text-white/60 font-medium max-w-xl">
+                Real-time operational telemetry across the Leeds International network.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4 pt-4">
+              <Link 
+                href="/intranet" 
+                className="px-8 py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-[11px] hover:scale-105 transition-all shadow-xl flex items-center gap-3"
+              >
+                Access Intranet
+                <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
+
+          {/* Actionable Alerts Bar */}
+          {isAdmin && (
+            <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] backdrop-blur-md space-y-4 min-w-[300px]">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Sovereignty Status</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/60">System Health</span>
+                  <span className="text-xs text-emerald-400 font-bold">OPTIMUM</span>
+                </div>
+                <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                  <div className="w-[98%] h-full bg-emerald-500 rounded-full" />
+                </div>
+                <p className="text-[9px] text-white/40 italic">Aggregated data from {stats[1]?.value || 0} branches.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── DYNAMIC METRICS GRID ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, idx) => {
+          const Icon = ICON_MAP[stat.icon] || BookOpen;
+          return (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              key={stat.label} 
+              className="bg-white p-8 rounded-[2.5rem] shadow-premium border border-gray-50 flex items-center justify-between group hover:border-primary/20 transition-all"
+            >
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                <h3 className="text-3xl font-black text-black">{stat.value}</h3>
+              </div>
+              <div className={`p-4 rounded-2xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform shadow-inner`}>
+                <Icon size={24} />
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
